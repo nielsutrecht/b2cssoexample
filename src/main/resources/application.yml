@@ -1,0 +1,7 @@
+sso:
+  secret: PLACEHOLDER
+  client-id: PLACEHOLDER
+  authority: PLACEHOLDER
+  policy: PLACEHOLDER
+  scope: openid
+  redirect-url: http://localhost:8080/redirect
