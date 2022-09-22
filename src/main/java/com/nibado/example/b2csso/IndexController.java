@@ -21,7 +21,10 @@ public class IndexController {
 
     @GetMapping
     public ModelAndView index(HttpServletRequest request) throws Exception {
-        var url = component.getRedirectUrl(createOrGetState(request));
+        var url = component.getRedirectUrl(
+                createOrGetState(request),
+                createOrGetNonce(request));
+
         return new ModelAndView("index", Map.of("url", url));
     }
 
@@ -30,6 +33,13 @@ public class IndexController {
             request.getSession().setAttribute("state", UUID.randomUUID().toString());
         }
         return request.getSession().getAttribute("state").toString();
+    }
+
+    private String createOrGetNonce(HttpServletRequest request) {
+        if(request.getSession().getAttribute("nonce") == null) {
+            request.getSession().setAttribute("nonce", UUID.randomUUID().toString());
+        }
+        return request.getSession().getAttribute("nonce").toString();
     }
 
     @GetMapping("/redirect")
@@ -55,7 +65,7 @@ public class IndexController {
             return new ModelAndView("error", Map.of("error", "Session State does not match"));
         }
 
-        var userObjectId = component.handleCallback(code);
+        var userObjectId = component.handleCallback(code, createOrGetNonce(request));
 
         return new ModelAndView("redirect", Map.of("code", code, "oid", userObjectId));
     }

@@ -36,9 +36,7 @@ public class SsoComponent {
                 .build();
     }
 
-    public String getRedirectUrl(String state) throws Exception {
-        String nonce = UUID.randomUUID().toString();
-
+    public String getRedirectUrl(String state, String nonce) throws Exception {
         var parameters = AuthorizationRequestUrlParameters.builder(redirectUrl, Set.of(scope, clientId))
                 .responseMode(ResponseMode.QUERY)
                 .prompt(Prompt.SELECT_ACCOUNT).state(state).nonce(nonce).build();
@@ -46,7 +44,7 @@ public class SsoComponent {
         return setup().getAuthorizationRequestUrl(parameters).toString();
     }
 
-    public UUID handleCallback(String code) throws Exception {
+    public UUID handleCallback(String code, String nonce) throws Exception {
         var client = setup();
         AuthorizationCodeParameters authParams = AuthorizationCodeParameters
                 .builder(code, new URI(redirectUrl)).scopes(Set.of(scope, clientId)).build();
@@ -56,6 +54,12 @@ public class SsoComponent {
 
         var jwt = SignedJWT.parse(result.idToken());
         var claims = jwt.getJWTClaimsSet();
+
+        var claimsNonce = claims.getStringClaim("nonce");
+
+        if(!nonce.equals(claimsNonce)) {
+            throw new IllegalArgumentException("Nonce does not match claims");
+        }
 
         var userObjectId = UUID.fromString(claims.getStringClaim("oid"));
 
